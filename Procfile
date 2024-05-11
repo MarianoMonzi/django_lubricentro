@@ -1,1 +1,1 @@
-web: gunicorn lubricentro.wsgi
+web: python manage.py collectstatic && gunicorn lubricentro.wsgi
