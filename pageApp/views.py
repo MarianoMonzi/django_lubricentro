@@ -15,24 +15,21 @@ def index(request):
     return render(request, 'index.html')
 
 def loginlubricentro(request):
+
     if request.method == 'GET':
-        return render(request, 'login.html', {'form': AuthenticationForm()})
+        return render(request, 'login.html', {
+            'form': AuthenticationForm
+        })
     else:
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
+        user = authenticate(
+            request, username=request.POST['username'], password=request.POST['password'])
 
         if user is None:
-            return render(request, 'login.html', {'form': AuthenticationForm(), 'error': 'Username or Password is incorrect'})
+            return render(request, 'login.html', {
+                'form': AuthenticationForm,
+                'error': 'Username or Password is incorrect'
+            })
         else:
-            # Verificar si el usuario ya tiene una sesión activa
-            active_sessions = Session.objects.filter(expire_date__gte=timezone.now(), session_data__contains=user.id)
-            if active_sessions.exists():
-                # Si el usuario ya tiene una sesión activa, cerrar la sesión anterior
-                for session in active_sessions:
-                    session.delete()
-                return render(request, 'login.html', {'form': AuthenticationForm(), 'error': 'Alguien ya esta en esta sesion, intente con un usuario diferente'})
-
             login(request, user)
             return redirect('clientes')
 
