@@ -20,7 +20,8 @@
 <body>
     <header>
         <a href="https://bluelinehub.net/" target="_blank"><img src="../static/image/logoBlueline.png"></a>
-        <label>Admin<a href="{% url 'login' %}"><i class="ri-user-fill"></i></a></label>
+        <label id="username-label"></label>
+        <a href="{% url 'logout' %}"><i class="ri-user-fill"></i></a>
     </header>
     <div class="container navigate">
         <a class="imgLink" href="{% url 'clientes' %}"><img src="../static/image/logo.png"></a>
@@ -129,51 +130,57 @@
     </div>
 
     <!--POPUP DE NUEVA TAREA DENTRO DE CLIENTE-->
-    <div class="popupTask" id="popupTask">
-        <span class="close" id="closeTask">&times;</span>
-        <h3>Agregar nueva tarea</h3>
+    <div class="viewport">
+        <div class="popupTask" id="popupTask">
+            <span class="close" id="closeTask">&times;</span>
+            <h3>Agregar nueva tarea</h3>
 
-        <form method="POST" id="nuevaTareaForm">
-            {% csrf_token %}
-            <div class="inputs-cont task">
-                <input type="hidden" name="cliente_id" id="clienteIdInput">
-                <div class="all-inputs">
-                    <label>Fecha</label>
-                    <input type="date" name="fecha" id="fecha">
+            <form method="POST" id="nuevaTareaForm">
+                {% csrf_token %}
+                <div class="inputs-cont task">
+                    <input type="hidden" name="cliente_id" id="clienteIdInput">
+                    <div class="all-inputs">
+                        <label>Fecha</label>
+                        <input type="date" name="fecha" id="fecha">
+                    </div>
+                    <div class="all-inputs">
+                        <label>Prox. Servicio</label>
+                        <input type="date" name="proxservicio" id="proxservicio">
+                    </div>
+                    <div class="all-inputs">
+                        <label>Servicios</label>
+                        <select name="servicio" id="selectServicio">
+                            <option value="">Selecciona un Servicio...</option>
+                            <option value="Servicio Preventivo">Servicio Preventivo</option>
+                            <option value="Servicio Correctivo">Servicio Correctivo</option>
+                        </select>
+                    </div>
+                    <div class="all-inputs">
+                        <label>Mecánico</label>
+                        <select name="mecanico" id="selectMecanico">
+                            <!-- Aquí se cargarán dinámicamente los nombres de los mecánicos -->
+                            <option value="{{ mecanico.id }}" id="mecanico_id">Selecciona un mecánico...</option>
+                        </select>
+                    </div>
+                    <div class="all-inputs">
+                        <label>Kilometros</label>
+                        <input type="text" name="kilometros" id="kilometros">
+                    </div>
                 </div>
-                <div class="all-inputs">
-                    <label>Prox. Servicio</label>
-                    <input type="date" name="proxservicio" id="proxservicio">
+                <div class="save-btn">
+                    <button>Guardar</button>
                 </div>
-                <div class="all-inputs">
-                    <label>Servicios</label>
-                    <select name="servicio" id="selectServicio">
-                        <option value="">Selecciona un Servicio...</option>
-                        <option value="Servicio Preventivo">Servicio Preventivo</option>
-                        <option value="Servicio Correctivo">Servicio Correctivo</option>
-                    </select>
-                </div>
-                <div class="all-inputs">
-                    <label>Mecánico</label>
-                    <select name="mecanico" id="selectMecanico">
-                        <!-- Aquí se cargarán dinámicamente los nombres de los mecánicos -->
-                        <option value="{{ mecanico.id }}" id="mecanico_id">Selecciona un mecánico...</option>
-                    </select>
-                </div>
-                <div class="all-inputs">
-                    <label>Kilometros</label>
-                    <input type="text" name="kilometros" id="kilometros">
-                </div>
-            </div>
-            <div class="save-btn">
-                <button>Guardar</button>
-            </div>
-        </form>
-
+            </form>
+        </div>
     </div>
     <script>
         $(document).ready(function () {
             let clienteId;
+            $('#closeUser').click(function() {
+                // Recargar la página
+                location.reload();
+            });
+            
             // Función para cargar los detalles del cliente al hacer clic en su nombre
             $('.openUser').click(function () {
                 const clienteId = $(this).data('cliente-id');
@@ -216,6 +223,8 @@
                         }
                     });
                 }
+                
+
                 
                 // Función para enviar los datos actualizados al servidor al editar un cliente
                 function editarCliente(clienteId) {
@@ -275,23 +284,7 @@
 
             });
 
-            $('#nuevoClienteForm').submit(function (e) {
-                e.preventDefault();
-                $.ajax({
-                    type: 'POST',
-                    url: '/guardar_cliente/',
-                    data: $(this).serialize(),
-                    success: function (response) {
-                        alert('Cliente guardado correctamente')
-                        location.reload();
-                        $('#nuevoClienteForm')[0].reset();
-                        $('#popup').hide()
-                    },
-                    error: function (xhr, status, error) {
-                        alert('Error al guardar el cliente');
-                    }
-                });
-            });
+            
 
             
 
@@ -371,9 +364,6 @@
                                 window.location.href = '/clientes/';
     
                                 // Aquí puedes realizar acciones adicionales después de eliminar la tarea
-                            } else {
-                                alert('Error al eliminar item');
-                                // Aquí puedes manejar errores si la eliminación falla
                             }
                         })
                         .catch(error => {

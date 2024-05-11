@@ -11,6 +11,7 @@ h1, h2, h3, h4, a, nav{
 	margin: 0;
 }
 
+
 body{
 	font-family: poppins, Sans-serif;
 	margin: 0;
@@ -117,6 +118,7 @@ header label a i:hover{
 
 .navigate nav a{
 	position: relative;
+	text-align: center;
 	text-decoration: none;
 	color: #fff;
 	padding: 30px;
@@ -268,7 +270,7 @@ header label a i:hover{
   	background-color: #181b38;
   	transition: all 0.3s ease;
   	animation: slideDown 0.5s ease;
-	top: 15%;
+	top: 20%;
 }
 
 .popupUser{
@@ -280,6 +282,7 @@ header label a i:hover{
 	z-index: 2;
 	transition: all 0.3s ease;
 	animation: slideRight 0.5s ease;
+	top: 30%;
 }
 
 .popup {
@@ -292,7 +295,7 @@ header label a i:hover{
   	background-color: #181b38;
   	transition: all 0.3s ease;
   	animation: slideDown 0.5s ease;
-	top: 20%;
+	top: 25%;
 }
 
 .popup.show {
@@ -337,6 +340,7 @@ header label a i:hover{
 
 .inputs-cont{
 	display: grid;
+	justify-content: center;
 	grid-template-columns: 1fr 1fr;
 	gap: 40px;
 	padding-bottom: 30px;
@@ -576,8 +580,8 @@ header label a i:hover{
 
 .data-cont th{
 	color: #fff;
-	padding: 20px;
 	font-size: 20px;
+	padding-bottom: 8px;
 }
 
 .data-cont tbody td{
@@ -626,6 +630,12 @@ header label a i:hover{
     font-size: 12px;
     position: relative;
 	outline: none;
+}
+
+.viewport{
+	display: flex;
+	justify-content: center;
+	align-items: center;
 }
 
 @keyframes slideDown {
@@ -723,6 +733,8 @@ header label a i:hover{
     	grid-row: 1;
     	width: 85%;
     	margin: auto;
+		font-size: 18px;
+		padding: 15px;
 	}
 	.navigate .imgLink img{
 		padding: 0;
@@ -730,11 +742,18 @@ header label a i:hover{
 	}
 	/*NUEVO CLIENTE POPUP*/
 	.inputs-cont{
-		gap: 15px;
+		gap: 25px;
 	}
 	.inputs-cont div input{
 		width: 90%;
 		align-self: center;
+		font-size: 12px;
+	}
+	.inputs-cont div label{
+		font-size: 16px;
+	}
+	.all-inputs select{
+		font-size: 10px;
 	}
 	.popup{
 		width: 85%;
@@ -769,19 +788,23 @@ header label a i:hover{
 	.popupUser{
 		width: 95%;
 	}
+	.popupTask{
+		width: 90%;
+	}
 	.data-cont{
 		padding: 15px 0 15px 0;
 	}
 	.data-cont .info{
 		display: grid;
 		grid-template-columns: 1fr 1fr;
-		gap: 15px;
+		gap: 20px;
 	}
 	.data-cont .info button{
 	    grid-column: 2;
 	    grid-row: 1;
     	width: 70%;
     	margin: auto;
+		font-size: 18px;
 	}
 	.data-cont .info div{
 		grid-column: 1;
@@ -803,10 +826,13 @@ header label a i:hover{
 		padding-bottom: 10px;
 	}
 	.data-cont td{
-		font-size: 12px;
+		font-size: 10px;
 	}
 	.data-cont td:nth-child(6){
 		flex-direction: column;
 		font-size: 16px;
+	}
+	.save-btn button{
+		font-size: 24px;
 	}
 }

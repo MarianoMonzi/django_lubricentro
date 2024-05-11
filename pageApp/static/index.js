@@ -122,7 +122,30 @@ $(document).on('click', '.openUser', function() {
 });
 
 $(document).ready(function () {
-
+    $('#nuevoClienteForm').submit(function (e) {
+        e.preventDefault();
+        $.ajax({
+            type: 'POST',
+            url: '/guardar_cliente/',
+            data: $(this).serialize(),
+            success: function (response) {
+                $('#nuevoClienteForm')[0].reset();
+                $('#popup').hide();
+                
+                // Agregar el ID del cliente al input hidden
+                $('#clienteIdInput').val(response.cliente_id);
+                console.log($('#clienteIdInput').val());
+                
+                // Abre el popup de detalles del cliente
+                $('#detalleClienteContainer').load('/detalles_cliente/?cliente_id=' + response.cliente_id);
+                $('#popupUser').fadeIn();
+                $('#overlay').fadeIn();
+            },
+            error: function (xhr, status, error) {
+                alert('Error al guardar el cliente');
+            }
+        });
+    });
 
     $('#nuevaTareaForm').submit(function (e) {
 
@@ -143,6 +166,7 @@ $(document).ready(function () {
             },
             error: function (xhr, status, error) {
                 alert('Error al guardar Tarea');
+                console.log(xhr.responseText);
             }
         });
     });

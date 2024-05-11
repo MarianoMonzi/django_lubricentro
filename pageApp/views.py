@@ -2,56 +2,82 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 from django.contrib.auth import login, logout, authenticate
+from django.contrib.sessions.models import Session
 from django.db import IntegrityError
 from .forms import ClienteForm, ListaCorrectivaForm, ListaPreventivaForm, TareaForm
 from .models import Cliente, Tarea, ListaCorrectiva, ListaPreventiva, Planillas, PlanillaCliente
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.forms.models import model_to_dict
 
-# Create your views here.
-
+def index(request):
+    return render(request, 'index.html')
 
 def loginlubricentro(request):
-
     if request.method == 'GET':
-        return render(request, 'login.html', {
-            'form': AuthenticationForm
-        })
+        return render(request, 'login.html', {'form': AuthenticationForm()})
     else:
-        user = authenticate(
-            request, username=request.POST['username'], password=request.POST['password'])
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
 
         if user is None:
-            return render(request, 'login.html', {
-                'form': AuthenticationForm,
-                'error': 'Username or Password is incorrect'
-            })
+            return render(request, 'login.html', {'form': AuthenticationForm(), 'error': 'Username or Password is incorrect'})
         else:
+            # Verificar si el usuario ya tiene una sesión activa
+            active_sessions = Session.objects.filter(expire_date__gte=timezone.now(), session_data__contains=user.id)
+            if active_sessions.exists():
+                # Si el usuario ya tiene una sesión activa, cerrar la sesión anterior
+                for session in active_sessions:
+                    session.delete()
+                return render(request, 'login.html', {'form': AuthenticationForm(), 'error': 'Alguien ya esta en esta sesion, intente con un usuario diferente'})
+
             login(request, user)
             return redirect('clientes')
 
+@login_required
+def signout(request):
+    logout(request)
+    return redirect('login')
 
+def get_username(request):
+    if request.user.is_authenticated:
+        username = request.user.username
+        return JsonResponse({'username': username})
+    else:
+        return JsonResponse({'error': 'User is not authenticated'}, status=401)
+
+      
 @login_required
 def clientes(request):
-    todos_los_clientes = Cliente.objects.all()
     clientes_con_info = []
 
-    for cliente in todos_los_clientes:
-        tareas = Tarea.objects.filter(cliente=cliente.id).order_by('-fecha').first()
-        ultima_visita = None
-        if tareas:
-            ultima_visita = tareas.fecha
+    # Obtener la fecha y hora actual
 
-        clientes_con_info.append({
-            'cliente': cliente,
-            'ultima_visita': ultima_visita,
-        })
+    # Obtener todos los clientes con sus próximas visitas
+    for cliente in Cliente.objects.all():
+        proxima_visita = None
+        # Obtener la próxima tarea del cliente
+        proxima_tarea = Tarea.objects.filter(cliente=cliente.id, proxservicio__gte=timezone.now().date()).order_by('proxservicio').first()
+        if proxima_tarea:
+            proxima_visita = proxima_tarea.proxservicio
+            clientes_con_info.append({
+                'cliente': cliente,
+                'proxima_visita': proxima_visita,
+                'tiene_proxima_visita': True
+            })
+        else:
+            
+            clientes_con_info.append({
+                'cliente': cliente,
+                'proxima_visita': proxima_visita,
+                'tiene_proxima_visita': False
+            })
 
-    return render(request, 'cliente.html', {
-        'clientes': clientes_con_info
-    })
+    clientes_con_info.sort(key=lambda x: (not x['tiene_proxima_visita'], x['proxima_visita']))
+
+    return render(request, 'cliente.html', {'clientes': clientes_con_info})
 
 
 def detalles_cliente(request):
@@ -138,6 +164,22 @@ def tareas_cliente(request):
     else:
         return JsonResponse({'error': 'ID de cliente no proporcionado'}, status=400)
 
+def format_fecha(fecha):
+    # Diccionario para mapear los nombres de los meses
+    meses = {
+        1: "Enero", 2: "Febrero", 3: "Marzo", 4: "Abril",
+        5: "Mayo", 6: "Junio", 7: "Julio", 8: "Agosto",
+        9: "Septiembre", 10: "Octubre", 11: "Noviembre", 12: "Diciembre"
+    }
+
+    # Extraer el día, mes y año de la fecha
+    dia = fecha.day
+    mes = meses[fecha.month]
+    año = fecha.year
+
+    # Formatear la fecha como "5 de Mayo de 2024"
+    return f"{dia} {mes} {año}"
+
 def buscar_cliente(request):
     query = request.GET.get('q')
     clientes_filtrados = []
@@ -154,7 +196,7 @@ def buscar_cliente(request):
         tareas = Tarea.objects.filter(cliente=cliente.id).order_by('-fecha').first()
         ultima_visita = None
         if tareas:
-            ultima_visita = tareas.fecha
+            ultima_visita = format_fecha(tareas.fecha)
 
         cliente_dict['ultima_visita'] = ultima_visita
         clientes_con_info_filtrados.append(cliente_dict)
@@ -166,7 +208,7 @@ def buscar_cliente(request):
 
             tareas = Tarea.objects.filter(cliente=cliente['id']).order_by('-fecha').first()
             if tareas:
-                cliente['ultima_visita'] = tareas.fecha
+                cliente['ultima_visita'] = format_fecha(tareas.fecha)
 
     return JsonResponse(clientes_con_info_filtrados, safe=False)
 
@@ -182,10 +224,9 @@ def guardar_cliente(request):
         cliente_nuevo = Cliente(
             nombre=nombre, numero=numero, patente=patente, modelo=vehiculo)
 
-        print(cliente_nuevo.modelo)
 
         cliente_nuevo.save()
-        return JsonResponse({'message': 'Cliente guardado correctamente'})
+        return JsonResponse({'message': 'Cliente guardado correctamente', 'cliente_id': cliente_nuevo.pk})
     else:
         return JsonResponse({'error': 'Método no permitido'}, status=405)
 
@@ -292,11 +333,8 @@ def planilla_correctiva(request):
     print(items)  # Obtener todas las tareas guardadas
     if request.method == 'POST':
         form = ListaCorrectivaForm(request.POST)
-        print(form)
         if form.is_valid():
-            print(form)
             form.save()
-            # Puedes redirigir a una página de éxito
             return redirect('planilla_correctiva')
     else:
         form = ListaCorrectivaForm()
@@ -430,3 +468,4 @@ def obtener_nombres_mecanicos(request):
 
 def planilla(request):
     return render(request, 'planilla.html')
+

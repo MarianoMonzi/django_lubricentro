@@ -20,7 +20,7 @@
             {% for item in clientes %}
                 <tr>
                     <td>{{ item.cliente.patente }}</td>
-                    <td>{{ item.ultima_visita }}</td>
+                    <td>{{ item.proxima_visita }}</td>
                     <td>{{ item.cliente.modelo }}</td>
                     <td class="openUser" data-cliente-id="{{ item.cliente.id }}">{{ item.cliente.nombre }}</td>
                 </tr>

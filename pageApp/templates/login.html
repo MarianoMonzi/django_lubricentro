@@ -15,7 +15,7 @@
     <h1>Blueline IT</h1>
     <h3>LOGIN</h3>
     <div class="log-cont">
-        <form method="POST">
+        <form method="POST" >
             {% csrf_token %}
             <h2>Inicia sesion</h2>
             <div class="form-group">
@@ -42,7 +42,32 @@
     </div>
     {% endblock %}
 
-
+    <script>
+        $.ajax({
+            url: '/loginlubricentro/',
+            type: 'POST',
+            data: {
+                username: 'nombredeusuario',
+                password: 'contraseña',
+            },
+            success: function(response) {
+                // Manejar la respuesta del servidor
+                if (response.user) {
+                    // Mostrar el nombre de usuario en el frontend
+                    console.log('Nombre de usuario:', response.user.username);
+                    // Redirigir a la página de clientes u otra página después del inicio de sesión
+                    window.location.href = '/clientes/';
+                } else if (response.error) {
+                    // Mostrar mensajes de error si el inicio de sesión falla
+                    console.error('Error:', response.error);
+                }
+            },
+            error: function(xhr, status, error) {
+                // Manejar errores de la solicitud AJAX
+                console.error('Error:', error);
+            }
+        });
+    </script>
 
 
 </body>
