@@ -10,6 +10,7 @@ from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.forms.models import model_to_dict
+from django.db.models import Q
 
 def index(request):
     return render(request, 'index.html')
@@ -182,18 +183,22 @@ def buscar_cliente(request):
     clientes_filtrados = []
 
     if query:
-        clientes_filtrados = (Cliente.objects.filter(
-            nombre__icontains=query) | Cliente.objects.filter(
-            modelo__icontains=query) | Cliente.objects.filter(
-            patente__icontains=query)).distinct()
+        query = query.replace(' ', '')
+
+        # Filtrar clientes por patente ignorando espacios
+        clientes_filtrados = Cliente.objects.filter(
+            Q(patente__iregex=r'\s*'.join(query)) |
+            Q(nombre__icontains=query) |
+            Q(modelo__icontains=query)
+        ).distinct()
 
     clientes_con_info_filtrados = []
     for cliente in clientes_filtrados:
         cliente_dict = model_to_dict(cliente)
-        tareas = Tarea.objects.filter(cliente=cliente.id).order_by('-fecha').first()
+        tareas = Tarea.objects.filter(cliente=cliente.id).order_by('-proxservicio').first()
         ultima_visita = None
         if tareas:
-            ultima_visita = format_fecha(tareas.fecha)
+            ultima_visita = format_fecha(tareas.proxservicio)
 
         cliente_dict['ultima_visita'] = ultima_visita
         clientes_con_info_filtrados.append(cliente_dict)
@@ -209,6 +214,10 @@ def buscar_cliente(request):
 
     return JsonResponse(clientes_con_info_filtrados, safe=False)
 
+
+    
+    
+    
 
 
 def guardar_cliente(request):
