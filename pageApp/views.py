@@ -208,7 +208,7 @@ def buscar_cliente(request):
         for cliente in clientes_con_info_filtrados:
             cliente['ultima_visita'] = None  # Añadir la clave 'ultima_visita' con valor None por defecto
 
-            tareas = Tarea.objects.filter(cliente=cliente['id']).order_by('-fecha').first()
+            tareas = Tarea.objects.filter(cliente=cliente['id']).order_by('-proxservicio').first()
             if tareas:
                 cliente['ultima_visita'] = format_fecha(tareas.fecha)
 
