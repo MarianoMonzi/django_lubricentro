@@ -11,6 +11,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.forms.models import model_to_dict
 from django.db.models import Q
+import requests
 
 def index(request):
     return render(request, 'index.html')
@@ -475,3 +476,63 @@ def obtener_nombres_mecanicos(request):
 def planilla(request):
     return render(request, 'planilla.html')
 
+
+def enviar(request):
+    # Token de acceso de Facebook
+    token = 'EAALodXPhMJMBOzq4voUpdxdYjo651acMTTZCJzvtZCwTQGbjf7eC8PoWC1HUBYMo2VoftZA8U3Sbp55xJLw2C3fbu5GB32OhLBLdSvZC51isxhQHbNuhxXOqR2lSd64604kNRJCMzqG9Q6yyY7ZBLU8Ie4ctOSjDy8uxZCwV7GJ3GcPe8QhZCQYgq90nuU5DDy5'
+    
+    # Identificador de número de teléfono
+    id_numero_telefono = '311483295386071'
+    
+    # Teléfono que recibe (el de nosotros que dimos de alta)
+    telefono_envia = '5492236016324'
+    
+    # Variables de ejemplo (puedes obtenerlas de tu sistema)
+    patente_vehiculo = 'ABC123'
+    fecha_proximo_servicio = '24 de Mayo'
+    
+    # URL de la API de WhatsApp
+    url = f"https://graph.facebook.com/v19.0/{id_numero_telefono}/messages"
+    
+    # Headers para la solicitud
+    headers = {
+        'Authorization': f'Bearer {token}',
+        'Content-Type': 'application/json'
+    }
+    
+    # Cuerpo de la solicitud con template personalizado
+    payload = {
+        "messaging_product": "whatsapp",
+        "to": telefono_envia,
+        "type": "template",
+        "template": {
+            "name": "appointment_reminder",  # Nombre del template personalizado
+            "language": {
+                "code": "en_US"
+            },
+            "components": [
+                {
+                    "type": "body",
+                    "parameters": [
+                        {
+                            "type": "text",
+                            "text": patente_vehiculo
+                        },
+                        {
+                            "type": "text",
+                            "text": fecha_proximo_servicio
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+    
+    # Realizar la solicitud POST
+    response = requests.post(url, headers=headers, json=payload)
+    
+    # Verificar la respuesta
+    if response.status_code == 200:
+        return JsonResponse({'Mensaje': 'Enviado correctamente'}, status=200)
+    else:
+        return JsonResponse({'Mensaje': 'Error al enviar mensaje', 'Detalles': response.json()}, status=response.status_code)

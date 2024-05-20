@@ -70,6 +70,8 @@ $(document).ready(function () {
             alert('Error al cargar nombres de mecánicos');
         }
     });
+
+    
 });
 
 function cargarDetallesCliente(clienteId) {

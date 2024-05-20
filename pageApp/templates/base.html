@@ -22,6 +22,7 @@
         <a href="https://bluelinehub.net/" target="_blank"><img src="../static/image/logoBlueline.png"></a>
         <label id="username-label"></label>
         <a href="{% url 'logout' %}"><i class="ri-user-fill"></i></a>
+        <div id="loader"></div>
     </header>
     <div class="container navigate">
         <a class="imgLink" href="{% url 'clientes' %}"><img src="../static/image/logo.png"></a>
@@ -37,6 +38,12 @@
     <div class="blur-white"></div>
     <div class="blur-red"></div>
     <div class="blur-red"></div>
+    <form action="{% url 'clientes' %}" method="GET">
+        <div class="search-bar">
+            <input type="text" name="q" placeholder="Buscar..." id="searchInput">
+            <i class="ri-search-line"></i>
+        </div>
+    </form>
     {% block content %}
 
     {% endblock %}
@@ -175,15 +182,17 @@
     </div>
     <script>
         $(document).ready(function () {
-            let clienteId;
+            var loader = $('#loader');
+
             $('#closeUser').click(function() {
                 // Recargar la página
                 location.reload();
             });
             
             // Función para cargar los detalles del cliente al hacer clic en su nombre
-            $('.openUser').click(function () {
+            $(document).on('click', '.openUser', function () {
                 const clienteId = $(this).data('cliente-id');
+                console.log(clienteId)
                 $('#clienteIdInput').val(clienteId); // Pasar ID del cliente al form de tareas
 
                 // Hacer la solicitud AJAX para obtener los detalles del cliente
@@ -195,6 +204,7 @@
                         eliminarCliente(clienteId);  
                     }
                 });
+                
                 
                 function cargarDatosCliente(clienteId) {
                     // Realizar una solicitud AJAX para obtener los datos del cliente a editar
@@ -223,17 +233,75 @@
                         }
                     });
                 }
-                
-
-                
-                // Función para enviar los datos actualizados al servidor al editar un cliente
+    
+                // Funcion para elimintar tarea del cliente
+                function eliminarTarea(tareaClienteId) {
+                    if (tareaClienteId === '') {
+                        console.error('El ID de la tarea del cliente es inválido.');
+                        return;  // Salir de la función si el ID es inválido
+                    }
+                    if (confirm("¿Estás seguro de que deseas eliminar esta tarea?")) {
+                        loader.show();
+                        fetch(`/eliminar_tarea_cliente/?tarea_cliente_id=${tareaClienteId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRFToken': '{{ csrf_token }}'  // Asegúrate de incluir el token CSRF
+                            }
+                        })
+                            .then(response => {
+                                if (response.ok) {
+                                    alert('Tarea del cliente eliminada correctamente');
+                                    console.log(tareaClienteId)
+                                    loader.hide()
+        
+                                    // Aquí puedes realizar acciones adicionales después de eliminar la tarea
+                                } else {
+                                    alert('Error al eliminar item');
+                                    // Aquí puedes manejar errores si la eliminación falla
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error al eliminar item:', error);
+                            });
+                    }
+                    
+                }
+    
+                function eliminarCliente(clienteId) {
+                    if (clienteId === '') {
+                        console.error('El ID de la tarea del cliente es inválido.');
+                        return;  // Salir de la función si el ID es inválido
+                    }
+                    if (confirm("¿Estás seguro de que deseas eliminar al cliente?")) {
+                        fetch(`/eliminar_cliente/?cliente_id=${clienteId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRFToken': '{{ csrf_token }}'  // Asegúrate de incluir el token CSRF
+                            }
+                        })
+                            .then(response => {
+                                if (response.ok) {
+                                    alert('Cliente eliminado correctamente');
+                                    console.log(clienteId)
+                                    window.location.href = '/clientes/';
+        
+                                    // Aquí puedes realizar acciones adicionales después de eliminar la tarea
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error al eliminar item:', error);
+                            });
+                    }
+                    
+                }
+    
                 function editarCliente(clienteId) {
                     // Obtener los datos del formulario
                     const nombre = $('#nombreEdit').val();
                     const numero = $('#numeroEdit').val();
                     const patente = $('#patenteEdit').val();
                     const modelo = $('#modeloEdit').val();
-                
+                    loader.show()
                     // Realizar una solicitud AJAX para enviar los datos actualizados al servidor
                     $.ajax({
                         type: 'POST',
@@ -255,22 +323,20 @@
                         },
                         error: function (xhr, status, error) {
                             alert('Error al actualizar el cliente');
+                        },
+                        complete: function () {
+                            loader.hide();  // Ocultar indicador de carga cuando se completa la solicitud
                         }
                     });
                 }
+    
+
+                
+                // Función para enviar los datos actualizados al servidor al editar un cliente
+                
                 
                 // Evento para abrir el formulario de edición al hacer clic en el botón de edición en la vista principal
-                $('#detalleClienteContainer').on('click', 'p', function (event) {
-                    //const clienteId = $(this).data('cliente-id');
-                     // Cargar los datos del cliente en el formulario de edición
-                    if ($(event.target).hasClass('ri-pencil-line')) {
-                          
-                    cargarDatosCliente(clienteId);
-                    $('#popupEdit').fadeIn();
-                    $('#overlayEdit').fadeIn();
-                    }
-                    
-                });
+                
 
                 
                 
@@ -280,12 +346,24 @@
                     editarCliente(clienteId);  // Enviar los datos actualizados al servidor al editar el cliente
                 });
 
+                $('#detalleClienteContainer').on('click', 'p', function (event) {
+                    //const clienteId = $(this).data('cliente-id');
+                     // Cargar los datos del cliente en el formulario de edición
+                    if ($(event.target).hasClass('ri-pencil-line')) {
+                          loader.show()
+                    cargarDatosCliente(clienteId);
+                    $('#popupEdit').fadeIn();
+                    $('#overlayEdit').fadeIn();
+                    }
+                    
+                });
+
 
 
             });
 
             
-
+            
             
 
             // Función para cerrar el popup de detalles del cliente
@@ -312,69 +390,98 @@
                 }
             });
 
+            function getUsername() {
+                loader.show();
+                $.ajax({
+                    type: 'GET',
+                    url: '/get_username/',  // Reemplaza '/get_username/' con la URL correcta de tu vista
+                    success: function (data) {
+                        if (data.username) {
+                            $('#username-label').text(data.username);
+                        } else {
+                            console.error('No se pudo obtener el nombre de usuario.');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error al obtener el nombre de usuario:', error);
+                    },
+                    complete: function () {
+                        loader.hide();  // Ocultar indicador de carga cuando se completa la solicitud
+                    }
+                });
+            }
+        
+            // Llamar a la función para obtener y mostrar el nombre de usuario al cargar la página
+            getUsername();
             
+        });
+        var loader = $('#loader');
 
-            // Funcion para elimintar tarea del cliente
-            function eliminarTarea(tareaClienteId) {
-                if (tareaClienteId === '') {
-                    console.error('El ID de la tarea del cliente es inválido.');
-                    return;  // Salir de la función si el ID es inválido
-                }
-                if (confirm("¿Estás seguro de que deseas eliminar esta tarea?")) {
-                    fetch(`/eliminar_tarea_cliente/?tarea_cliente_id=${tareaClienteId}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'X-CSRFToken': '{{ csrf_token }}'  // Asegúrate de incluir el token CSRF
-                        }
-                    })
-                        .then(response => {
-                            if (response.ok) {
-                                alert('Tarea del cliente eliminada correctamente');
-                                console.log(tareaClienteId)
-    
-                                // Aquí puedes realizar acciones adicionales después de eliminar la tarea
-                            } else {
-                                alert('Error al eliminar item');
-                                // Aquí puedes manejar errores si la eliminación falla
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error al eliminar item:', error);
+        function ajaxBuscar(query){
+            loader.show()
+            $.ajax({
+                type: 'GET',
+                url: '/buscar_cliente/',
+                data: {
+                    q: query
+                },
+                success: function (response) {
+                    console.log(response)
+                    $('#clientesTable').empty();  // Vaciamos la tabla antes de actualizar
+                    if (response.length > 0) {
+                        $.each(response, function (index, item) {
+                            // Construir la fila de la tabla con los datos de cada cliente
+                            var row = `<tr>
+                                <td>${item.patente}</td>
+                                <td>${item.ultima_visita}</td>
+                                <td>${item.modelo}</td>
+                                <td class="openUser" data-cliente-id="${item.id}">${item.nombre}</td>
+                                </tr>`;
+                            $('#clientesTable').append(row);
                         });
+                    } else {
+                        $('#clientesTable').append('<tr><td colspan="4">No se encontraron resultados para "' + query + '"</td></tr>');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.log('Error al obtener resultados de búsqueda');
+                },
+                complete: function () {
+                    loader.hide();  // Ocultar indicador de carga cuando se completa la solicitud
                 }
-                
-            }
+            });
+        }
 
-            function eliminarCliente(clienteId) {
-                if (clienteId === '') {
-                    console.error('El ID de la tarea del cliente es inválido.');
-                    return;  // Salir de la función si el ID es inválido
-                }
-                if (confirm("¿Estás seguro de que deseas eliminar al cliente?")) {
-                    fetch(`/eliminar_cliente/?cliente_id=${clienteId}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'X-CSRFToken': '{{ csrf_token }}'  // Asegúrate de incluir el token CSRF
-                        }
-                    })
-                        .then(response => {
-                            if (response.ok) {
-                                alert('Cliente eliminado correctamente');
-                                console.log(clienteId)
-                                window.location.href = '/clientes/';
+        $('#searchInput').on('input', function () {
+            var query = $(this).val().trim();       
+        
+            ajaxBuscar(query)
     
-                                // Aquí puedes realizar acciones adicionales después de eliminar la tarea
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error al eliminar item:', error);
-                        });
-                }
-                
-            }
-
+            
         });
     </script>
+    <style>
+        #loader {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 4px solid rgba(0, 0, 0, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #3498db;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            z-index: 1000;
+            display: none; /* Ocultar por defecto */
+        }
+        
+        /* Animación para girar el indicador de carga */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 
 </body>
 

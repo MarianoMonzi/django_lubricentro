@@ -29,6 +29,7 @@ urlpatterns = [
          name='obtener_nombres_mecanicos'),
      path('buscar_cliente/', views.buscar_cliente, name='buscar_cliente'),
      path('get_username/', views.get_username, name='get_username'),
+     path('enviar/', views.enviar, name='enviar'),
      path('logout/', views.signout, name='logout'),
 
 ]
