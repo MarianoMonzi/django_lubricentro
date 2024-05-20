@@ -11,7 +11,6 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.forms.models import model_to_dict
 from django.db.models import Q
-import requests
 
 def index(request):
     return render(request, 'index.html')
