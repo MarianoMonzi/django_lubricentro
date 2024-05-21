@@ -11,6 +11,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.forms.models import model_to_dict
 from django.db.models import Q
+import requests
 
 def index(request):
     return render(request, 'index.html')
@@ -484,7 +485,7 @@ def enviar(request):
     id_numero_telefono = '311483295386071'
     
     # Teléfono que recibe (el de nosotros que dimos de alta)
-    telefono_envia = '5492236016324'
+    telefono_envia = '541162006228'
     
     # Variables de ejemplo (puedes obtenerlas de tu sistema)
     patente_vehiculo = 'ABC123'
