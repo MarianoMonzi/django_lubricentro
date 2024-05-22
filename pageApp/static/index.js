@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const cerrar = document.getElementById('close');
     const popup = document.getElementById('popup');
     const overlay = document.getElementById('overlay');
+    
 
     abrir.onclick = function () {
         popup.style.display = 'block';
@@ -74,6 +75,23 @@ $(document).ready(function () {
     
 });
 
+
+function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            // Buscar el token CSRF
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
 function cargarDetallesCliente(clienteId) {
     $.ajax({
         type: 'GET',
@@ -91,7 +109,6 @@ function cargarDetallesCliente(clienteId) {
                     $('#tbody-tareas').empty(); // Vaciar el contenido existente antes de agregar nuevas tareas
 
                     response.tareas.forEach(function (tarea) {
-                        console.log(tarea)
                         var fila = `<tr data-tarea_cliente-id="${tarea.id}">
                         <td>${tarea.fecha}</td>
                         <td>${tarea.servicio}</td>
@@ -121,9 +138,17 @@ function cargarDetallesCliente(clienteId) {
 $(document).on('click', '.openUser', function() {
     var clienteId = $(this).data('cliente-id');
     cargarDetallesCliente(clienteId);
-});
 
-$(document).ready(function () {
+    $('#nuevaTareaForm').submit(function (e) {
+        e.preventDefault();
+        
+        // Obtener el valor del select
+        var selectServicio = $('#selectServicio').val();
+
+        // Enviar el formulario por AJAX
+        guardarTarea(selectServicio);
+    });
+
     $('#nuevoClienteForm').submit(function (e) {
         e.preventDefault();
         $.ajax({
@@ -148,28 +173,25 @@ $(document).ready(function () {
             }
         });
     });
+});
 
-    $('#nuevaTareaForm').submit(function (e) {
 
-        e.preventDefault();
-        var selectServicio = $('#selectServicio').val();
-        console.log('La opción es:', selectServicio);
 
-        $.ajax({
-            type: 'POST',
-            url: '/guardar_tarea/',
-            data: $(this).serialize(),
-            success: function (response) {
-                alert('Tarea guardada correctamente');
-                console.log(selectServicio)
-                location.reload();
-                $('#nuevaTareaForm')[0].reset();
-                $('#popup').hide();
-            },
-            error: function (xhr, status, error) {
-                alert('Error al guardar Tarea');
-                console.log(xhr.responseText);
-            }
-        });
+function guardarTarea(selectServicio) {
+    $.ajax({
+        type: 'POST',
+        url: '/guardar_tarea/',
+        data: $('#nuevaTareaForm').serialize(),
+        success: function (response) {
+            alert('Tarea guardada correctamente');
+            console.log(selectServicio);
+            location.reload();  // Recargar la página
+            $('#nuevaTareaForm')[0].reset();
+            $('#popup').hide();
+        },
+        error: function (xhr, status, error) {
+            alert('Error al guardar Tarea');
+            console.error(xhr.responseText);
+        }
     });
-})
+}

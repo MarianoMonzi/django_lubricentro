@@ -29,7 +29,10 @@ urlpatterns = [
          name='obtener_nombres_mecanicos'),
      path('buscar_cliente/', views.buscar_cliente, name='buscar_cliente'),
      path('get_username/', views.get_username, name='get_username'),
-     path('enviar/', views.enviar, name='enviar'),
+     path('guardar_estado_toggle/', views.guardar_estado_toggle, name='guardar_estado_toggle'),
+     path('obtener_estado_toggle/<int:cliente_id>/', views.obtener_estado_toggle, name='obtener_estado_toggle'),
+     path('enviar_mensajes_automaticamente/<int:cliente_id>/', views.enviar_mensajes_automaticamente, name='enviar_mensajes_automaticamente'),
+     path('comprobar_mensajes_pendientes/', views.comprobar_mensajes_pendientes, name='comprobar_mensajes_pendientes'),
      path('logout/', views.signout, name='logout'),
 
 ]

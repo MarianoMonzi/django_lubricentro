@@ -16,7 +16,18 @@ class Cliente(models.Model):
         return self.nombre
 
 
+class MensajeWhatsApp(models.Model):
+    cliente_id = models.IntegerField()
+    enviar_mensaje = models.BooleanField(default=False)
+    fecha_envio = models.DateField(null=True, blank=True)
+    enviado = models.BooleanField(default=False)
 
+    def marcar_como_enviado(self):
+        self.enviado = True
+        self.save()
+
+    def __str__(self):
+        return f"Cliente ID: {self.cliente_id}, Enviar mensaje: {self.enviar_mensaje}, Fecha envío: {self.fecha_envio}"
 
 
 class Planillas(models.Model):

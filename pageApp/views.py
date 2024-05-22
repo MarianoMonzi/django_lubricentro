@@ -5,7 +5,7 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.sessions.models import Session
 from django.db import IntegrityError
 from .forms import ClienteForm, ListaCorrectivaForm, ListaPreventivaForm, TareaForm
-from .models import Cliente, Tarea, ListaCorrectiva, ListaPreventiva, Planillas, PlanillaCliente
+from .models import Cliente, Tarea, ListaCorrectiva, ListaPreventiva, Planillas, PlanillaCliente, MensajeWhatsApp
 from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
@@ -162,6 +162,15 @@ def tareas_cliente(request):
         return JsonResponse({'tareas': detalles_tareas})
     else:
         return JsonResponse({'error': 'ID de cliente no proporcionado'}, status=400)
+    
+def obtener_primera_tarea(cliente_id):
+    cliente = get_object_or_404(Cliente, id=cliente_id)
+    tareas = Tarea.objects.filter(cliente=cliente)
+
+    # Obtener la primera tarea próxima
+    tarea_proxima = tareas.filter(proxservicio__gte=timezone.now().date()).order_by('fecha').first()
+
+    return tarea_proxima, cliente.numero
 
 def format_fecha(fecha):
     # Diccionario para mapear los nombres de los meses
@@ -214,12 +223,6 @@ def buscar_cliente(request):
                 cliente['ultima_visita'] = format_fecha(tareas.fecha)
 
     return JsonResponse(clientes_con_info_filtrados, safe=False)
-
-
-    
-    
-    
-
 
 def guardar_cliente(request):
     if request.method == 'POST':
@@ -477,19 +480,13 @@ def planilla(request):
     return render(request, 'planilla.html')
 
 
-def enviar(request):
+def enviar(request, telefono_envia, fecha_service, kilometros):
     # Token de acceso de Facebook
     token = 'EAALodXPhMJMBOzq4voUpdxdYjo651acMTTZCJzvtZCwTQGbjf7eC8PoWC1HUBYMo2VoftZA8U3Sbp55xJLw2C3fbu5GB32OhLBLdSvZC51isxhQHbNuhxXOqR2lSd64604kNRJCMzqG9Q6yyY7ZBLU8Ie4ctOSjDy8uxZCwV7GJ3GcPe8QhZCQYgq90nuU5DDy5'
     
     # Identificador de número de teléfono
     id_numero_telefono = '311483295386071'
     
-    # Teléfono que recibe (el de nosotros que dimos de alta)
-    telefono_envia = '541162006228'
-    
-    # Variables de ejemplo (puedes obtenerlas de tu sistema)
-    patente_vehiculo = 'ABC123'
-    fecha_proximo_servicio = '24 de Mayo'
     
     # URL de la API de WhatsApp
     url = f"https://graph.facebook.com/v19.0/{id_numero_telefono}/messages"
@@ -516,11 +513,11 @@ def enviar(request):
                     "parameters": [
                         {
                             "type": "text",
-                            "text": patente_vehiculo
+                            "text": fecha_service
                         },
                         {
                             "type": "text",
-                            "text": fecha_proximo_servicio
+                            "text": kilometros
                         }
                     ]
                 }
@@ -536,3 +533,89 @@ def enviar(request):
         return JsonResponse({'Mensaje': 'Enviado correctamente'}, status=200)
     else:
         return JsonResponse({'Mensaje': 'Error al enviar mensaje', 'Detalles': response.json()}, status=response.status_code)
+    
+def enviar_mensaje_whatsapp(request, cliente_id):
+    tarea, telefono = obtener_primera_tarea(cliente_id)
+    if tarea:
+        fecha_service = tarea.fecha.strftime('%d/%m')  # Formato de fecha
+        kilometros = tarea.kilometros
+        return enviar(request, telefono, fecha_service, kilometros)
+    else:
+        # No hay tareas futuras, devolver una respuesta vacía o mensaje adecuado
+        return JsonResponse({'Mensaje': 'No hay tareas futuras disponibles para el cliente'}, status=200)
+    
+def guardar_estado_toggle(request):
+    if request.method == 'POST':
+        cliente_id = request.POST.get('cliente_id')
+        enviar_mensaje = request.POST.get('enviar_mensaje') == 'true'  # Convertir a booleano
+        
+
+        cliente = get_object_or_404(Cliente, id=cliente_id)
+        tareas = Tarea.objects.filter(cliente=cliente)
+
+        # Obtener la primera tarea próxima
+        fecha_envio = tareas.filter(proxservicio__gte=timezone.now().date()).order_by('fecha').first()
+        
+        # Guardar o actualizar el estado del toggle en la base de datos
+        mensaje, created = MensajeWhatsApp.objects.update_or_create(
+            cliente_id=cliente_id,
+            defaults={
+                'enviar_mensaje': enviar_mensaje,
+                'fecha_envio': fecha_envio.proxservicio if fecha_envio.proxservicio else None
+            }
+        )
+        
+        return JsonResponse({'mensaje': 'Estado del toggle guardado correctamente.'})
+    
+def obtener_estado_toggle(request, cliente_id):
+    cliente = get_object_or_404(Cliente, pk=cliente_id)
+    estado_obj, created = MensajeWhatsApp.objects.get_or_create(cliente_id=cliente.pk)
+
+    return JsonResponse({'enviar_mensaje': estado_obj.enviar_mensaje}, status=200)
+
+def enviar_mensajes_automaticamente(request, cliente_id):
+    ahora = timezone.now()
+    siete_dias_despues = ahora + timezone.timedelta(days=7)
+    
+    mensajes_a_enviar = MensajeWhatsApp.objects.filter(cliente_id=cliente_id, fecha_envio__lte=siete_dias_despues, enviado=False)
+    print(mensajes_a_enviar)
+    
+    # Aquí enviarías los mensajes, por ejemplo, llamando a una función de envío
+    for mensaje in mensajes_a_enviar:
+        enviar_mensaje_whatsapp(mensaje.cliente_id)  # Define esta función según tu lógica de envío
+        mensaje.marcar_como_enviado()
+    
+    return JsonResponse({'status': 'Mensajes enviados automáticamente.'})
+    
+def comprobar_mensajes_pendientes(request):
+    ahora = timezone.now().date()
+    siete_dias_despues = ahora + timezone.timedelta(days=7)
+
+    mensajes_pendientes = MensajeWhatsApp.objects.filter(
+        enviar_mensaje=True,
+        fecha_envio__lte=siete_dias_despues,
+        enviado=False
+    )
+
+    clientes_a_enviar = []
+    for mensaje in mensajes_pendientes:
+        try:
+            cliente = Cliente.objects.get(pk=mensaje.cliente_id)
+            
+            # Enviar el mensaje
+            enviar_mensaje_whatsapp(request, cliente.pk)
+            
+            # Marcar el mensaje como enviado
+            mensaje.enviado = True
+            mensaje.save()
+
+            # Agregar a la lista de clientes a los que se les ha enviado el mensaje
+            clientes_a_enviar.append({
+                'cliente_id': cliente.pk,
+                'fecha_envio': mensaje.fecha_envio,
+                'mensaje_id': mensaje.pk
+            })
+        except Cliente.DoesNotExist:
+            continue
+
+    return JsonResponse({'clientes_a_enviar': clientes_a_enviar})

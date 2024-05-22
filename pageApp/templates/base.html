@@ -11,8 +11,8 @@
         href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css">
     <link rel="stylesheet" type="text/css"
         href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.2.0/remixicon.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script src="../static/index.js" defer></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 
     <title>Lubricentro</title>
 </head>
@@ -117,7 +117,12 @@
         <span class="close" id="closeUser">&times;</span>
         <div class="data-cont">
             <div class="info" id="detalleClienteContainer">
+                
 
+            </div>
+            <div class="toggle">
+                <input type="checkbox" id="btn" class="btn">
+                <label for="btn" class="switch"></label>
             </div>
             <table>
                 <thead>
@@ -188,12 +193,86 @@
                 // Recargar la página
                 location.reload();
             });
+
+            comprobarYEnviarMensajes()
+
+            
+
+            function comprobarYEnviarMensajes() {
+                $.ajax({
+                    type: 'GET',
+                    url: `/comprobar_mensajes_pendientes/`,
+                    success: function (response) {
+                        console.log(response);
+                        alert('mensajes enviados a los clientes correctamente')
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error al comprobar mensajes pendientes:', error);
+                    }
+                });
+            }
             
             // Función para cargar los detalles del cliente al hacer clic en su nombre
             $(document).on('click', '.openUser', function () {
-                const clienteId = $(this).data('cliente-id');
-                console.log(clienteId)
-                $('#clienteIdInput').val(clienteId); // Pasar ID del cliente al form de tareas
+                var clienteId = $(this).data('cliente-id');
+                $('#clienteIdInput').val(clienteId);
+
+                let toggleBtn = document.getElementById('btn'); 
+
+                toggleBtn.addEventListener('change', function() {
+                    const isChecked = toggleBtn.checked;
+                    console.log(isChecked); // Imprime true si está activado, false si está desactivado
+
+                    var enviarMensaje = isChecked;
+                    var fechaEnvio = $('#fechaEnvio').val();
+                    saveToggleState(clienteId, enviarMensaje, fechaEnvio);
+
+                });
+
+                function obtenerYAplicarEstadoToggle() {
+                    $.ajax({
+                        type: 'GET',
+                        url: `/obtener_estado_toggle/${clienteId}/`,  // Endpoint para obtener el estado del toggle desde la base de datos
+                        success: function (response) {
+                            toggleBtn.checked = response.enviar_mensaje; // Aplicar el estado del toggle obtenido
+                        },
+                        error: function (xhr, status, error) {
+                            console.error('Error al obtener el estado del toggle:', error);
+                        }
+                    });
+                }
+            
+                // Llamar a la función para obtener y aplicar el estado del toggle al cargar la página
+                obtenerYAplicarEstadoToggle();
+
+                function saveToggleState(clienteId, enviarMensaje, fechaEnvio) {
+                    var csrftoken = getCookie('csrftoken');
+                    $.ajax({
+                        type: 'POST',
+                        url: '/guardar_estado_toggle/',
+                        headers: {
+                            'X-CSRFToken': csrftoken  // Asegúrate de incluir el token CSRF
+                        },
+                        data: {
+                            cliente_id: clienteId,
+                            enviar_mensaje: enviarMensaje,
+                            fecha_envio: fechaEnvio
+                        },
+                        success: function (response) {
+                            console.log('Estado del toggle guardado correctamente.');
+                        },
+                        error: function (xhr, status, error) {
+                            console.error('Error al guardar el estado del toggle:', error);
+                        }
+                    });
+                }
+
+                
+                
+                
+                
+                
+                // Pasar ID del cliente al form de tareas
 
                 // Hacer la solicitud AJAX para obtener los detalles del cliente
                 
@@ -204,9 +283,28 @@
                         eliminarCliente(clienteId);  
                     }
                 });
+
+                function enviarMensaje(clienteId) {
+                    $.ajax({
+                        url: `/enviar/${clienteId}/`,
+                        method: 'GET',
+                        contentType: 'application/json',
+                        success: function(data) {
+                            if (data.Mensaje === 'Enviado correctamente') {
+                                console.log('Mensaje enviado correctamente');
+                            } else {
+                                console.error('Error al enviar mensaje:', data.Detalles);
+                            }
+                        },
+                        error: function(error) {
+                            console.error('Error:', error);
+                        }
+                    });
+                }
                 
                 
                 function cargarDatosCliente(clienteId) {
+                    
                     // Realizar una solicitud AJAX para obtener los datos del cliente a editar
                     $.ajax({
                         type: 'GET',
@@ -251,7 +349,6 @@
                             .then(response => {
                                 if (response.ok) {
                                     alert('Tarea del cliente eliminada correctamente');
-                                    console.log(tareaClienteId)
                                     loader.hide()
         
                                     // Aquí puedes realizar acciones adicionales después de eliminar la tarea
@@ -282,7 +379,6 @@
                             .then(response => {
                                 if (response.ok) {
                                     alert('Cliente eliminado correctamente');
-                                    console.log(clienteId)
                                     window.location.href = '/clientes/';
         
                                     // Aquí puedes realizar acciones adicionales después de eliminar la tarea
@@ -301,7 +397,6 @@
                     const numero = $('#numeroEdit').val();
                     const patente = $('#patenteEdit').val();
                     const modelo = $('#modeloEdit').val();
-                    loader.show()
                     // Realizar una solicitud AJAX para enviar los datos actualizados al servidor
                     $.ajax({
                         type: 'POST',
@@ -323,9 +418,6 @@
                         },
                         error: function (xhr, status, error) {
                             alert('Error al actualizar el cliente');
-                        },
-                        complete: function () {
-                            loader.hide();  // Ocultar indicador de carga cuando se completa la solicitud
                         }
                     });
                 }
@@ -384,7 +476,6 @@
             $('#tbody-tareas').on('click', 'tr', function (event) {
                 if ($(event.target).hasClass('ri-close-circle-line')) {
                     const tareaClienteId = $(this).data('tarea_cliente-id');
-                    console.log(tareaClienteId)
                     eliminarTarea(tareaClienteId);  // Llamar a la función para eliminar la tarea
                     $(this).remove();  // Quitar la fila de la tabla visualmente
                 }
@@ -415,72 +506,12 @@
             getUsername();
             
         });
-        var loader = $('#loader');
-
-        function ajaxBuscar(query){
-            loader.show()
-            $.ajax({
-                type: 'GET',
-                url: '/buscar_cliente/',
-                data: {
-                    q: query
-                },
-                success: function (response) {
-                    console.log(response)
-                    $('#clientesTable').empty();  // Vaciamos la tabla antes de actualizar
-                    if (response.length > 0) {
-                        $.each(response, function (index, item) {
-                            // Construir la fila de la tabla con los datos de cada cliente
-                            var row = `<tr>
-                                <td>${item.patente}</td>
-                                <td>${item.ultima_visita}</td>
-                                <td>${item.modelo}</td>
-                                <td class="openUser" data-cliente-id="${item.id}">${item.nombre}</td>
-                                </tr>`;
-                            $('#clientesTable').append(row);
-                        });
-                    } else {
-                        $('#clientesTable').append('<tr><td colspan="4">No se encontraron resultados para "' + query + '"</td></tr>');
-                    }
-                },
-                error: function (xhr, status, error) {
-                    console.log('Error al obtener resultados de búsqueda');
-                },
-                complete: function () {
-                    loader.hide();  // Ocultar indicador de carga cuando se completa la solicitud
-                }
-            });
-        }
-
-        $('#searchInput').on('input', function () {
-            var query = $(this).val().trim();       
         
-            ajaxBuscar(query)
-    
-            
-        });
+
+        
     </script>
     <style>
-        #loader {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            border: 4px solid rgba(0, 0, 0, 0.3);
-            border-radius: 50%;
-            border-top: 4px solid #3498db;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            z-index: 1000;
-            display: none; /* Ocultar por defecto */
-        }
         
-        /* Animación para girar el indicador de carga */
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
     </style>
 
 </body>
