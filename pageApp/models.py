@@ -8,7 +8,7 @@ from django.dispatch import receiver
 
 class Cliente(models.Model):
     nombre = models.CharField(max_length=50)
-    numero = models.IntegerField()
+    numero = models.BigIntegerField()
     patente = models.CharField(max_length=50)
     modelo = models.CharField(max_length=50)
 
