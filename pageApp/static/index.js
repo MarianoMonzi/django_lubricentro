@@ -72,7 +72,40 @@ $(document).ready(function () {
         }
     });
 
-    
+    $('#nuevoClienteForm').submit(function (e) {
+        e.preventDefault();
+        $.ajax({
+            type: 'POST',
+            url: '/guardar_cliente/',
+            data: $(this).serialize(),
+            success: function (response) {
+                $('#nuevoClienteForm')[0].reset();
+                $('#popup').hide();
+                
+                // Agregar el ID del cliente al input hidden
+                $('#clienteIdInput').val(response.cliente_id);
+                console.log($('#clienteIdInput').val());
+                
+                // Abre el popup de detalles del cliente
+                $('#detalleClienteContainer').load('/detalles_cliente/?cliente_id=' + response.cliente_id);
+                $('#popupUser').fadeIn();
+                $('#overlay').fadeIn();
+            },
+            error: function (xhr, status, error) {
+                alert('Error al guardar el cliente');
+            }
+        });
+    });
+
+    $('#nuevaTareaForm').submit(function (e) {
+        e.preventDefault();
+        
+        // Obtener el valor del select
+        var selectServicio = $('#selectServicio').val();
+
+        // Enviar el formulario por AJAX
+        guardarTarea(selectServicio);
+    });    
 });
 
 
@@ -139,40 +172,9 @@ $(document).on('click', '.openUser', function() {
     var clienteId = $(this).data('cliente-id');
     cargarDetallesCliente(clienteId);
 
-    $('#nuevaTareaForm').submit(function (e) {
-        e.preventDefault();
-        
-        // Obtener el valor del select
-        var selectServicio = $('#selectServicio').val();
+    
 
-        // Enviar el formulario por AJAX
-        guardarTarea(selectServicio);
-    });
-
-    $('#nuevoClienteForm').submit(function (e) {
-        e.preventDefault();
-        $.ajax({
-            type: 'POST',
-            url: '/guardar_cliente/',
-            data: $(this).serialize(),
-            success: function (response) {
-                $('#nuevoClienteForm')[0].reset();
-                $('#popup').hide();
-                
-                // Agregar el ID del cliente al input hidden
-                $('#clienteIdInput').val(response.cliente_id);
-                console.log($('#clienteIdInput').val());
-                
-                // Abre el popup de detalles del cliente
-                $('#detalleClienteContainer').load('/detalles_cliente/?cliente_id=' + response.cliente_id);
-                $('#popupUser').fadeIn();
-                $('#overlay').fadeIn();
-            },
-            error: function (xhr, status, error) {
-                alert('Error al guardar el cliente');
-            }
-        });
-    });
+    
 });
 
 
