@@ -210,7 +210,7 @@
                     url: `/comprobar_mensajes_pendientes/`,
                     success: function (response) {
                         console.log(response);
-                        var cantidadMensajes = Array.isArray(response) ? response.length : 0;
+                        var cantidadMensajes = Array.isArray(response.clientes_a_enviar) ? response.clientes_a_enviar.length : 0;
                         alert(`Mensajes enviados a clientes: ${cantidadMensajes}`);
                     },
                     error: function (xhr, status, error) {

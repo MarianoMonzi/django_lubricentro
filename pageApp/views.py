@@ -535,14 +535,23 @@ def enviar(request, telefono_envia, fecha_service, kilometros):
         return JsonResponse({'Mensaje': 'Error al enviar mensaje', 'Detalles': response.json()}, status=response.status_code)
     
 def enviar_mensaje_whatsapp(request, cliente_id):
-    tarea, telefono = obtener_primera_tarea(cliente_id)
-    if tarea:
-        fecha_service = tarea.fecha.strftime('%d/%m')  # Formato de fecha
-        kilometros = tarea.kilometros
-        return enviar(request, telefono, fecha_service, kilometros)
+    # Obtener la hora actual con la zona horaria correcta
+    hora_actual = timezone.localtime().time()
+    hora_límite = timezone.datetime.strptime("09:00", "%H:%M").time()
+
+    # Verificar si la hora actual es mayor o igual a las 9 AM
+    if hora_actual >= hora_límite:
+        tarea, telefono = obtener_primera_tarea(cliente_id)
+        if tarea:
+            fecha_service = tarea.fecha.strftime('%d/%m')  # Formato de fecha
+            kilometros = tarea.kilometros
+            return enviar(request, telefono, fecha_service, kilometros)
+        else:
+            # No hay tareas futuras, devolver una respuesta vacía o mensaje adecuado
+            return JsonResponse({'Mensaje': 'No hay tareas futuras disponibles para el cliente'}, status=200)
     else:
-        # No hay tareas futuras, devolver una respuesta vacía o mensaje adecuado
-        return JsonResponse({'Mensaje': 'No hay tareas futuras disponibles para el cliente'}, status=200)
+        # Si la hora actual es menor a las 9 AM, devolver un mensaje adecuado
+        return JsonResponse({'Mensaje': 'Los mensajes solo se pueden enviar después de las 9 AM'}, status=200)
     
 def guardar_estado_toggle(request):
     if request.method == 'POST':
