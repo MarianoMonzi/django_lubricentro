@@ -20,8 +20,10 @@
 <body>
     <header>
         <a href="https://bluelinehub.net/" target="_blank"><img src="../static/image/logoBlueline.png"></a>
-        <label id="username-label"></label>
-        <a href="{% url 'logout' %}"><i class="ri-user-fill"></i></a>
+        <div>
+            <label id="username-label"></label>
+            <a href="{% url 'logout' %}"><i class="ri-user-fill"></i></a>
+        </div>
         <div id="loader"></div>
     </header>
     <div class="container navigate">

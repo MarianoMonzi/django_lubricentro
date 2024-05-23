@@ -20,7 +20,7 @@ h1, h2, h3, h4, a, nav{
 .toggle {
 	background: #eee;
 	width: 40px;
-    height: 23px;
+    height: 25px;
     padding: 5px;
     border-radius: 50px;
   }
@@ -93,6 +93,18 @@ header{
 	background-color: #08081C;
 	align-items: center;
 	padding: 25px 20px 25px 20px;
+}
+
+header i{
+	color: #1d4ed8;
+}
+
+header a:nth-child(2):hover{
+opacity: 0.7;
+}
+
+header a:nth-child(2){
+text-decoration: none;
 }
 
 header a img{
