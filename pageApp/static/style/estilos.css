@@ -11,27 +11,43 @@ h1, h2, h3, h4, a, nav{
 	margin: 0;
 }
 
-#loader {
-	position: fixed;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-	border: 4px solid rgba(0, 0, 0, 0.3);
-	border-radius: 50%;
-	border-top: 4px solid #3498db;
+.toggle-wsp-cont{
+    display: flex;
+    flex-direction: row;
+    margin-top: 5px;
+}
+
+.toggle {
+	background: #eee;
 	width: 40px;
-	height: 40px;
-	animation: spin 1s linear infinite;
-	z-index: 1000;
-	display: none; /* Ocultar por defecto */
-}
+    height: 23px;
+    padding: 5px;
+    border-radius: 50px;
+  }
+  
+  .switch {
+	width: 15px;
+    height: 15px;
+    background: #ccc;
+    display: flex;
+    cursor: pointer;
+    border-radius: 50px;
+    transition: all 0.25s ease 0s;
+  }
+  
+  .btn {
+	display: none;
+  }
+  
+  .btn:checked + .switch {
+	margin-left: 15px;
+	background: #1d4ed8;
+  }
 
-/* Animación para girar el indicador de carga */
-@keyframes spin {
-	0% { transform: rotate(0deg); }
-	100% { transform: rotate(360deg); }
-}
-
+  .wpicon {
+	margin: 3px;
+	color: #fff;
+  }
 
 body{
 	font-family: poppins, Sans-serif;
