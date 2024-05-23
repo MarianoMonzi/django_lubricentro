@@ -539,6 +539,7 @@ def enviar_mensajes_pendientes(request):
         enviar_mensaje=True,
         enviado=False
     )
+    print(mensajes_pendientes)
 
     clientes_a_enviar = []
 
@@ -589,12 +590,22 @@ def guardar_estado_toggle(request):
         enviar_mensaje = request.POST.get('enviar_mensaje') == 'true'  # Convertir a booleano
 
         # Obtener el cliente para asegurar que existe
-        cliente = get_object_or_404(Cliente, id=cliente_id)
 
-        # Actualizar todos los registros de MensajeWhatsApp para el cliente_id dado
-        MensajeWhatsApp.objects.filter(cliente_id=cliente_id).update(enviar_mensaje=enviar_mensaje)
+        if Tarea.objects.filter(cliente=cliente_id).exists():
+            if MensajeWhatsApp.objects.filter(cliente_id=cliente_id).exists():
+                MensajeWhatsApp.objects.filter(cliente_id=cliente_id).update(enviar_mensaje=enviar_mensaje)
+                return JsonResponse({'mensaje': 'Estado del toggle guardado correctamente.'})
+            else:
+                MensajeWhatsApp.objects.update_or_create(
+                cliente_id=cliente_id,
+                defaults={'enviar_mensaje': enviar_mensaje}
+                )
+                return JsonResponse({'mensaje': 'Estado del toggle guardado correctamente.'})
+        else:
+            return JsonResponse({'mensaje': 'Estado del toggle no guardado'})
 
-        return JsonResponse({'mensaje': 'Estado del toggle guardado correctamente.'})
+           
+
 
     return JsonResponse({'error': 'Método no permitido'}, status=405)
     
@@ -624,11 +635,17 @@ def comprobar_mensajes_pendientes(request):
     print(tareas_pendientes)
 
     for tarea in tareas_pendientes:
+        print(tarea)
         if not MensajeWhatsApp.objects.filter(cliente_id=tarea.cliente.pk, tarea_id=tarea.pk).exists():
-            MensajeWhatsApp.objects.create(
-                cliente_id=tarea.cliente.pk,
-                tarea_id=tarea.pk,
-                fecha_envio=tarea.fecha
-            )
+            toggleSwitch = MensajeWhatsApp.objects.filter(cliente_id=tarea.cliente.pk, enviar_mensaje=True)
+            if toggleSwitch:
+                print(tarea)
+                MensajeWhatsApp.objects.create(
+                    cliente_id=tarea.cliente.pk,
+                    tarea_id=tarea.pk,
+                    fecha_envio=tarea.fecha,
+                    enviado=False,
+                    enviar_mensaje=True
+                )
 
     return JsonResponse({'mensaje': 'Tareas pendientes guardadas correctamente.'})

@@ -20,7 +20,7 @@ class MensajeWhatsApp(models.Model):
     cliente_id = models.IntegerField()
     enviar_mensaje = models.BooleanField(default=False)
     fecha_envio = models.DateField(null=True, blank=True)
-    tarea_id = models.IntegerField()
+    tarea_id = models.IntegerField(null=True, blank=True)
     enviado = models.BooleanField(default=False)
 
     def marcar_como_enviado(self):

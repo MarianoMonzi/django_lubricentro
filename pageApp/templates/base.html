@@ -246,10 +246,11 @@
                     console.log(isChecked); // Imprime true si está activado, false si está desactivado
 
                     var enviarMensaje = isChecked;
-                    var fechaEnvio = $('#fechaEnvio').val();
-                    saveToggleState(clienteId, enviarMensaje, fechaEnvio);
+                    saveToggleState(clienteId, enviarMensaje);
 
                 });
+
+                obtenerYAplicarEstadoToggle();
 
                 function obtenerYAplicarEstadoToggle() {
                     $.ajax({
@@ -265,9 +266,9 @@
                 }
             
                 // Llamar a la función para obtener y aplicar el estado del toggle al cargar la página
-                obtenerYAplicarEstadoToggle();
+                
 
-                function saveToggleState(clienteId, enviarMensaje, fechaEnvio) {
+                function saveToggleState(clienteId, enviarMensaje) {
                     var csrftoken = getCookie('csrftoken');
                     $.ajax({
                         type: 'POST',
@@ -277,8 +278,7 @@
                         },
                         data: {
                             cliente_id: clienteId,
-                            enviar_mensaje: enviarMensaje,
-                            fecha_envio: fechaEnvio
+                            enviar_mensaje: enviarMensaje
                         },
                         success: function (response) {
                             console.log('Estado del toggle guardado correctamente.');
