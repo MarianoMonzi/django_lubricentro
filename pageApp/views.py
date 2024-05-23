@@ -535,36 +535,33 @@ def enviar(request, telefono_envia, fecha_service, kilometros):
         return JsonResponse({'Mensaje': 'Error al enviar mensaje', 'Detalles': response.json()}, status=response.status_code)
 
 def enviar_mensajes_pendientes(request):
-    ahora = timezone.now().date()
-    siete_dias_despues = ahora + timezone.timedelta(days=7)
-
     mensajes_pendientes = MensajeWhatsApp.objects.filter(
         enviar_mensaje=True,
-        fecha_envio__lte=siete_dias_despues,
         enviado=False
     )
 
     clientes_a_enviar = []
+
     for mensaje in mensajes_pendientes:
         try:
-            cliente = Cliente.objects.get(pk=mensaje.cliente_id)
-            tarea, telefono = obtener_primera_tarea(cliente.pk)
+            print(f"Cliente ID: {mensaje.cliente_id}, Enviar mensaje: {mensaje.enviar_mensaje}, Fecha envío: {mensaje.fecha_envio}")          
             
             # Enviar el mensaje
-            if tarea and enviar_mensaje_whatsapp(request, cliente.pk, tarea.pk):
+            enviar_mensaje_whatsapp(request, mensaje.cliente_id, mensaje.tarea_id)
                 # Marcar el mensaje como enviado
-                mensaje.marcar_como_enviado()
+            mensaje.marcar_como_enviado()
 
                 # Agregar a la lista de clientes a los que se les ha enviado el mensaje
-                clientes_a_enviar.append({
-                    'cliente_id': cliente.pk,
-                    'fecha_envio': mensaje.fecha_envio,
-                    'mensaje_id': mensaje.pk
-                })
+            clientes_a_enviar.append({
+                'cliente_id': mensaje.cliente_id,
+                'fecha_envio': mensaje.fecha_envio,
+                'mensaje_id': mensaje.pk
+            })
+
         except Cliente.DoesNotExist:
             continue
 
-    return JsonResponse({'clientes_a_enviar': clientes_a_enviar})  
+    return JsonResponse({'clientes_a_enviar': clientes_a_enviar}) 
 
 def enviar_mensaje_whatsapp(request, cliente_id, tarea_id):
     # Obtener la hora actual con la zona horaria correcta
@@ -590,30 +587,27 @@ def guardar_estado_toggle(request):
     if request.method == 'POST':
         cliente_id = request.POST.get('cliente_id')
         enviar_mensaje = request.POST.get('enviar_mensaje') == 'true'  # Convertir a booleano
-        
 
+        # Obtener el cliente para asegurar que existe
         cliente = get_object_or_404(Cliente, id=cliente_id)
-        tareas = Tarea.objects.filter(cliente=cliente)
 
-        # Obtener la primera tarea próxima
-        fecha_envio = tareas.filter(proxservicio__gte=timezone.now().date()).order_by('fecha').first()
-        
-        # Guardar o actualizar el estado del toggle en la base de datos
-        mensaje, created = MensajeWhatsApp.objects.update_or_create(
-            cliente_id=cliente_id,
-            defaults={
-                'enviar_mensaje': enviar_mensaje,
-                'fecha_envio': fecha_envio.proxservicio if fecha_envio.proxservicio else None
-            }
-        )
-        
+        # Actualizar todos los registros de MensajeWhatsApp para el cliente_id dado
+        MensajeWhatsApp.objects.filter(cliente_id=cliente_id).update(enviar_mensaje=enviar_mensaje)
+
         return JsonResponse({'mensaje': 'Estado del toggle guardado correctamente.'})
+
+    return JsonResponse({'error': 'Método no permitido'}, status=405)
     
 def obtener_estado_toggle(request, cliente_id):
     cliente = get_object_or_404(Cliente, pk=cliente_id)
-    estado_obj, created = MensajeWhatsApp.objects.get_or_create(cliente_id=cliente.pk)
 
-    return JsonResponse({'enviar_mensaje': estado_obj.enviar_mensaje}, status=200)
+    # Obtener el primer objeto que coincida o devolver None si no existe
+    estado_obj = MensajeWhatsApp.objects.filter(cliente_id=cliente.pk).first()
+    
+    # Si no existe, devolver un valor predeterminado
+    enviar_mensaje = estado_obj.enviar_mensaje if estado_obj else False
+
+    return JsonResponse({'enviar_mensaje': enviar_mensaje}, status=200)
 
 
     
@@ -627,13 +621,14 @@ def comprobar_mensajes_pendientes(request):
         proxservicio__lte=siete_dias_despues
     )
 
+    print(tareas_pendientes)
+
     for tarea in tareas_pendientes:
-        MensajeWhatsApp.objects.update_or_create(
-            cliente_id=tarea.cliente.pk,
-            defaults={
-                'enviar_mensaje': True,
-                'fecha_envio': tarea.fecha
-            }
-        )
+        if not MensajeWhatsApp.objects.filter(cliente_id=tarea.cliente.pk, tarea_id=tarea.pk).exists():
+            MensajeWhatsApp.objects.create(
+                cliente_id=tarea.cliente.pk,
+                tarea_id=tarea.pk,
+                fecha_envio=tarea.fecha
+            )
 
     return JsonResponse({'mensaje': 'Tareas pendientes guardadas correctamente.'})
