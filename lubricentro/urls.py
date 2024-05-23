@@ -31,7 +31,7 @@ urlpatterns = [
      path('get_username/', views.get_username, name='get_username'),
      path('guardar_estado_toggle/', views.guardar_estado_toggle, name='guardar_estado_toggle'),
      path('obtener_estado_toggle/<int:cliente_id>/', views.obtener_estado_toggle, name='obtener_estado_toggle'),
-     path('enviar_mensajes_automaticamente/<int:cliente_id>/', views.enviar_mensajes_automaticamente, name='enviar_mensajes_automaticamente'),
+     path('enviar_mensajes_pendientes/', views.enviar_mensajes_pendientes, name='enviar_mensajes_pendientes'),
      path('comprobar_mensajes_pendientes/', views.comprobar_mensajes_pendientes, name='comprobar_mensajes_pendientes'),
      path('logout/', views.signout, name='logout'),
 

@@ -199,19 +199,34 @@
                 // Recargar la página
                 location.reload();
             });
-
-            comprobarYEnviarMensajes()
+            comprobarMensajesPendientes()
+            
 
             
 
             function comprobarYEnviarMensajes() {
+                
+                $.ajax({
+                    type: 'GET',
+                    url: `/enviar_mensajes_pendientes/`,
+                    success: function (response) {
+                        console.log(response);
+                        var cantidadMensajes = Array.isArray(response.clientes_a_enviar) ? response.clientes_a_enviar.length : 0;
+                        alert(`Mensajes enviados a clientes: ${cantidadMensajes}`);
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error al comprobar mensajes pendientes:', error);
+                    }
+                });
+            }
+
+            function comprobarMensajesPendientes() {
                 $.ajax({
                     type: 'GET',
                     url: `/comprobar_mensajes_pendientes/`,
                     success: function (response) {
                         console.log(response);
-                        var cantidadMensajes = Array.isArray(response.clientes_a_enviar) ? response.clientes_a_enviar.length : 0;
-                        alert(`Mensajes enviados a clientes: ${cantidadMensajes}`);
+                        comprobarYEnviarMensajes();
                     },
                     error: function (xhr, status, error) {
                         console.error('Error al comprobar mensajes pendientes:', error);
