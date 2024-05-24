@@ -567,7 +567,7 @@ def enviar_mensajes_pendientes(request):
 def enviar_mensaje_whatsapp(request, cliente_id, tarea_id):
     # Obtener la hora actual con la zona horaria correcta
     hora_actual = timezone.localtime().time()
-    hora_límite = timezone.datetime.strptime("09:00", "%H:%M").time()
+    hora_límite = timezone.datetime.strptime("07:00", "%H:%M").time()
 
     # Verificar si la hora actual es mayor o igual a las 9 AM
     if hora_actual >= hora_límite:
@@ -647,5 +647,7 @@ def comprobar_mensajes_pendientes(request):
                     enviado=False,
                     enviar_mensaje=True
                 )
+        else:
+            return JsonResponse({'mensaje': 'No quedan tareas pendientes'})
 
     return JsonResponse({'mensaje': 'Tareas pendientes guardadas correctamente.'})
