@@ -43,6 +43,46 @@ document.addEventListener('DOMContentLoaded', function () {
 
 });
 
+function ajaxBuscar(query){
+    $.ajax({
+        type: 'GET',
+        url: '/buscar_cliente/',
+        data: {
+            q: query
+        },
+        success: function (response) {
+            console.log(response)
+            $('#clientesTable').empty();  // Vaciamos la tabla antes de actualizar
+            if (response.length > 0) {
+                $.each(response, function (index, item) {
+                    // Construir la fila de la tabla con los datos de cada cliente
+                    var row = `<tr>
+                        <td>${item.patente}</td>
+                        <td>${item.ultima_visita}</td>
+                        <td>${item.modelo}</td>
+                        <td class="openUser" data-cliente-id="${item.id}">${item.nombre}</td>
+                        </tr>`;
+                    $('#clientesTable').append(row);
+                });
+            } else {
+                $('#clientesTable').append('<tr><td colspan="4">No se encontraron resultados para "' + query + '"</td></tr>');
+            }
+        },
+        error: function (xhr, status, error) {
+            console.log('Error al obtener resultados de búsqueda');
+        }
+    });
+}
+
+$('#searchInput').on('input', function () {
+    var query = $(this).val().trim();       
+
+    ajaxBuscar(query)
+
+    
+});
+
+
 $(document).ready(function () {
     // Cargar nombres de mecánicos al cargar la página
     $.ajax({
