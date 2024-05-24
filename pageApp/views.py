@@ -594,13 +594,13 @@ def guardar_estado_toggle(request):
         if Tarea.objects.filter(cliente=cliente_id).exists():
             if MensajeWhatsApp.objects.filter(cliente_id=cliente_id).exists():
                 MensajeWhatsApp.objects.filter(cliente_id=cliente_id).update(enviar_mensaje=enviar_mensaje)
-                return JsonResponse({'mensaje': 'Estado del toggle guardado correctamente.'})
+                return JsonResponse({'mensaje': 'Estado del toggle actualizado correctamente.'})
             else:
                 MensajeWhatsApp.objects.update_or_create(
                 cliente_id=cliente_id,
                 defaults={'enviar_mensaje': enviar_mensaje}
                 )
-                return JsonResponse({'mensaje': 'Estado del toggle guardado correctamente.'})
+                return JsonResponse({'mensaje': 'Estado del toggle creado correctamente.'})
         else:
             return JsonResponse({'mensaje': 'Estado del toggle no guardado'})
 
@@ -635,7 +635,6 @@ def comprobar_mensajes_pendientes(request):
     print(tareas_pendientes)
 
     for tarea in tareas_pendientes:
-        print(tarea)
         if not MensajeWhatsApp.objects.filter(cliente_id=tarea.cliente.pk, tarea_id=tarea.pk).exists():
             toggleSwitch = MensajeWhatsApp.objects.filter(cliente_id=tarea.cliente.pk, enviar_mensaje=True)
             if toggleSwitch:
@@ -647,7 +646,6 @@ def comprobar_mensajes_pendientes(request):
                     enviado=False,
                     enviar_mensaje=True
                 )
-        else:
-            return JsonResponse({'mensaje': 'No quedan tareas pendientes'})
+        
 
     return JsonResponse({'mensaje': 'Tareas pendientes guardadas correctamente.'})

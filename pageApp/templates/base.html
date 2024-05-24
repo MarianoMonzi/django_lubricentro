@@ -212,7 +212,7 @@
                     success: function (response) {
                         console.log(response);
                         var cantidadMensajes = Array.isArray(response.clientes_a_enviar) ? response.clientes_a_enviar.length : 0;
-                        alert(`Mensajes enviados a clientes: ${cantidadMensajes}`);
+                        console.log(`Mensajes enviados a clientes: ${cantidadMensajes}`);
                     },
                     error: function (xhr, status, error) {
                         console.error('Error al comprobar mensajes pendientes:', error);
@@ -281,7 +281,7 @@
                             enviar_mensaje: enviarMensaje
                         },
                         success: function (response) {
-                            console.log('Estado del toggle guardado correctamente.');
+                            console.log(response.mensaje);
                         },
                         error: function (xhr, status, error) {
                             console.error('Error al guardar el estado del toggle:', error);
