@@ -355,36 +355,7 @@
                 }
     
                 // Funcion para elimintar tarea del cliente
-                function eliminarTarea(tareaClienteId) {
-                    if (tareaClienteId === '') {
-                        console.error('El ID de la tarea del cliente es inválido.');
-                        return;  // Salir de la función si el ID es inválido
-                    }
-                    if (confirm("¿Estás seguro de que deseas eliminar esta tarea?")) {
-                        loader.show();
-                        fetch(`/eliminar_tarea_cliente/?tarea_cliente_id=${tareaClienteId}`, {
-                            method: 'DELETE',
-                            headers: {
-                                'X-CSRFToken': '{{ csrf_token }}'  // Asegúrate de incluir el token CSRF
-                            }
-                        })
-                            .then(response => {
-                                if (response.ok) {
-                                    alert('Tarea del cliente eliminada correctamente');
-                                    loader.hide()
-        
-                                    // Aquí puedes realizar acciones adicionales después de eliminar la tarea
-                                } else {
-                                    alert('Error al eliminar item');
-                                    // Aquí puedes manejar errores si la eliminación falla
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Error al eliminar item:', error);
-                            });
-                    }
-                    
-                }
+                
     
                 function eliminarCliente(clienteId) {
                     if (clienteId === '') {
@@ -460,6 +431,8 @@
                     editarCliente(clienteId);  // Enviar los datos actualizados al servidor al editar el cliente
                 });
 
+
+
                 $('#detalleClienteContainer').on('click', 'p', function (event) {
                     //const clienteId = $(this).data('cliente-id');
                      // Cargar los datos del cliente en el formulario de edición
@@ -502,6 +475,37 @@
                     $(this).remove();  // Quitar la fila de la tabla visualmente
                 }
             });
+
+            function eliminarTarea(tareaClienteId) {
+                if (tareaClienteId === '') {
+                    console.error('El ID de la tarea del cliente es inválido.');
+                    return;  // Salir de la función si el ID es inválido
+                }
+                if (confirm("¿Estás seguro de que deseas eliminar esta tarea?")) {
+                    loader.show();
+                    fetch(`/eliminar_tarea_cliente/?tarea_cliente_id=${tareaClienteId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}'  // Asegúrate de incluir el token CSRF
+                        }
+                    })
+                        .then(response => {
+                            if (response.ok) {
+                                alert('Tarea del cliente eliminada correctamente');
+                                loader.hide()
+    
+                                // Aquí puedes realizar acciones adicionales después de eliminar la tarea
+                            } else {
+                                alert('Error al eliminar item');
+                                // Aquí puedes manejar errores si la eliminación falla
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error al eliminar item:', error);
+                        });
+                }
+                
+            }
 
             function getUsername() {
                 loader.show();
