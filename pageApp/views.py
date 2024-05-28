@@ -274,6 +274,26 @@ def editar_cliente(request):
     else:
         return JsonResponse({'error': 'Método no permitido'}, status=405)
 
+def crear_planilla(cliente_id, selectServicio):
+    cliente = Cliente.objects.get(id=cliente_id)
+    planilla = None
+
+    if selectServicio == 'Servicio Correctivo':
+        planilla = Planillas(cliente=cliente, lista_tipo=selectServicio)
+        try:
+            planilla.save()
+        except IntegrityError as e:
+            # Manejar la excepción de clave única u otros errores de integridad
+            print(f"Error al guardar la planilla correctiva: {e}")
+    else:
+        planilla = Planillas(cliente=cliente, lista_tipo=selectServicio)
+        try:
+            planilla.save()
+        except IntegrityError as e:
+            # Manejar la excepción de clave única u otros errores de integridad
+            print(f"Error al guardar la planilla preventiva: {e}")
+
+    return planilla
 
 def guardar_tarea(request):
     if request.method == 'POST':
@@ -288,11 +308,24 @@ def guardar_tarea(request):
         kilometros = request.POST.get('kilometros')
         print(cliente_id)
 
-        tarea_nueva = Tarea(cliente=cliente, fecha=fecha, planilla=crear_planilla(
-            cliente_id, selectServicio), kilometros=kilometros, proxservicio=proxservicio, mecanico=mecanico)
+        planilla = crear_planilla(cliente_id, selectServicio)
 
-        tarea_nueva.save()
-        return JsonResponse({'message': 'Tarea guardada correctamente'})
+        if planilla:
+            tarea_nueva = Tarea(
+            cliente=cliente,
+            fecha=fecha,
+            planilla=planilla,
+            kilometros=kilometros,
+            proxservicio=proxservicio,
+            mecanico=mecanico
+            )
+            tarea_nueva.save()
+            return JsonResponse({'message': 'Tarea guardada correctamente'})
+        else:
+            return JsonResponse({'message': 'Planilla no creada'})
+
+        
+        
     else:
         return JsonResponse({'error': 'Método no permitido'}, status=405)
 
@@ -316,26 +349,7 @@ def eliminar_cliente(request):
         return JsonResponse({'error': 'ID de cliente no proporcionado o método incorrecto'}, status=400)
 
 
-def crear_planilla(cliente_id, selectServicio):
-    cliente = Cliente.objects.get(id=cliente_id)
-    planilla = None
 
-    if selectServicio == 'Servicio Correctivo':
-        planilla = Planillas(cliente=cliente, lista_tipo=selectServicio)
-        try:
-            planilla.save()
-        except IntegrityError as e:
-            # Manejar la excepción de clave única u otros errores de integridad
-            print(f"Error al guardar la planilla correctiva: {e}")
-    else:
-        planilla = Planillas(cliente=cliente, lista_tipo=selectServicio)
-        try:
-            planilla.save()
-        except IntegrityError as e:
-            # Manejar la excepción de clave única u otros errores de integridad
-            print(f"Error al guardar la planilla preventiva: {e}")
-
-    return planilla
 
 
 def planilla_correctiva(request):
@@ -368,7 +382,9 @@ def planilla_preventiva(request):
 def planilla_personal(request):
     if request.method == 'POST':
         tarea_id = request.POST.get('tarea_id')
-        planilla_id = Planillas.objects.get(id=tarea_id)
+        print(tarea_id)
+        planilla_id = get_object_or_404(Planillas, id=tarea_id)
+        
 
         # Obtener todos los items enviados en el formulario
         items_post = {k: v for k, v in request.POST.items() if k.startswith('item_')}
