@@ -56,7 +56,7 @@ def clientes(request):
 
     # Obtener todos los clientes con sus próximas visitas
     for cliente in Cliente.objects.all():
-        proxima_visita = None
+        proxima_visita = 'No tiene proxima visita'
         # Obtener la próxima tarea del cliente
         proxima_tarea = Tarea.objects.filter(cliente=cliente.id, proxservicio__gte=timezone.now().date()).order_by('proxservicio').first()
         if proxima_tarea:
