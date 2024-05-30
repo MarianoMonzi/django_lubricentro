@@ -202,25 +202,33 @@ def buscar_cliente(request):
             Q(modelo__icontains=query)
         ).distinct()
 
-    clientes_con_info_filtrados = []
-    for cliente in clientes_filtrados:
-        cliente_dict = model_to_dict(cliente)
-        tareas = Tarea.objects.filter(cliente=cliente.id).order_by('-proxservicio').first()
-        ultima_visita = None
-        if tareas:
-            ultima_visita = format_fecha(tareas.proxservicio)
-
-        cliente_dict['ultima_visita'] = ultima_visita
-        clientes_con_info_filtrados.append(cliente_dict)
-
-    if not query:  # Si la consulta está vacía, devolver todos los clientes con última visita
-        clientes_con_info_filtrados = list(Cliente.objects.all().values())
-        for cliente in clientes_con_info_filtrados:
-            cliente['ultima_visita'] = None  # Añadir la clave 'ultima_visita' con valor None por defecto
-
-            tareas = Tarea.objects.filter(cliente=cliente['id']).order_by('-proxservicio').first()
+        clientes_con_info_filtrados = []
+        for cliente in clientes_filtrados:
+            cliente_dict = model_to_dict(cliente)
+            tareas = Tarea.objects.filter(cliente=cliente.id, proxservicio__gte=timezone.now().date()).order_by('proxservicio').first()
+            ultima_visita = 'No tiene proxima visita'
             if tareas:
-                cliente['ultima_visita'] = format_fecha(tareas.fecha)
+                ultima_visita = format_fecha(tareas.proxservicio)
+
+            cliente_dict['ultima_visita'] = ultima_visita
+            clientes_con_info_filtrados.append(cliente_dict)
+
+    else:  # Si la consulta está vacía, devolver todos los clientes con última visita y ordenarlos por 'proxservicio'
+        clientes = Cliente.objects.all()
+        clientes_con_info_filtrados = []
+
+        for cliente in clientes:
+            cliente_dict = model_to_dict(cliente)
+            cliente_dict['ultima_visita'] = 'No tiene proxima visita'  # Añadir la clave 'ultima_visita' con valor None por defecto
+
+            tareas = Tarea.objects.filter(cliente=cliente.id, proxservicio__gte=timezone.now().date()).order_by('proxservicio').first()
+            if tareas:
+                cliente_dict['ultima_visita'] = format_fecha(tareas.proxservicio)
+
+            clientes_con_info_filtrados.append(cliente_dict)
+
+        # Ordenar clientes por 'proxservicio'
+        clientes_con_info_filtrados.sort(key=lambda x: x['ultima_visita'] if x['ultima_visita'] != 'No tiene proxima visita' else '9999-12-31')
 
     return JsonResponse(clientes_con_info_filtrados, safe=False)
 
