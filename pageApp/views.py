@@ -630,11 +630,10 @@ def guardar_estado_toggle(request):
 
         # Obtener el cliente para asegurar que existe
 
-        if Tarea.objects.filter(cliente=cliente_id).exists():
-            if MensajeWhatsApp.objects.filter(cliente_id=cliente_id).exists():
-                MensajeWhatsApp.objects.filter(cliente_id=cliente_id).update(enviar_mensaje=enviar_mensaje)
-                return JsonResponse({'mensaje': 'Estado del toggle actualizado correctamente.'})
-            
+        
+        if MensajeWhatsApp.objects.filter(cliente_id=cliente_id).exists():
+            MensajeWhatsApp.objects.filter(cliente_id=cliente_id).update(enviar_mensaje=enviar_mensaje)
+            return JsonResponse({'mensaje': 'Estado del toggle actualizado correctamente.'})            
         else:
             MensajeWhatsApp.objects.create(
                 cliente_id=cliente_id,
