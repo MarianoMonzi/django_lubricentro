@@ -521,10 +521,10 @@ def planilla(request):
 
 def enviar(request, telefono_envia, fecha_service, kilometros):
     # Token de acceso de Facebook
-    token = 'EAALodXPhMJMBOzq4voUpdxdYjo651acMTTZCJzvtZCwTQGbjf7eC8PoWC1HUBYMo2VoftZA8U3Sbp55xJLw2C3fbu5GB32OhLBLdSvZC51isxhQHbNuhxXOqR2lSd64604kNRJCMzqG9Q6yyY7ZBLU8Ie4ctOSjDy8uxZCwV7GJ3GcPe8QhZCQYgq90nuU5DDy5'
+    token = ''
     
     # Identificador de número de teléfono
-    id_numero_telefono = '311483295386071'
+    id_numero_telefono = ''
     
     
     # URL de la API de WhatsApp
